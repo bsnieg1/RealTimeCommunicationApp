@@ -1,5 +1,9 @@
 import asyncio
+import os
+import sys
 from logging.config import fileConfig
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -9,7 +13,7 @@ from alembic import context
 
 from app.config import settings
 from app.database import Base
-from app import models  # noqa: F401 — registers model tables on Base.metadata
+from app import models  
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
