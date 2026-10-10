@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.dependencies import get_current_user
 from app.routers import auth, users, channels, messages, websocket
+from app.schemas.auth import UserResponse
 
 app = FastAPI(title="Real-Time Chat API")
 
@@ -26,7 +27,6 @@ app.include_router(websocket.router)
 def health():
     return {"status": "ok"}
 
-
-@app.get("/me")
+@app.get("/me", response_model=UserResponse)
 def read_current_user(user=Depends(get_current_user)):
     return user
