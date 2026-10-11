@@ -22,9 +22,10 @@ class ConnectionManager:
     def unsubscribe(self, websocket: WebSocket, channel_id: int) -> None:
         self._channel_connections[channel_id].discard(websocket)
 
-    async def broadcast(self, channel_id: int, message: dict) -> None:
+    async def broadcast(self, channel_id: int, message: dict, exclude: WebSocket | None = None) -> None:
         for websocket in self._channel_connections.get(channel_id, set()):
-            await websocket.send_json(message)
+            if websocket != exclude:
+                await websocket.send_json(message)
 
 
     def user_connection_count(self, user_id: int) -> int:

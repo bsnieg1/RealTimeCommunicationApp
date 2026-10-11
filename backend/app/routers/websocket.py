@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_access_token
 from app.database import get_db
+from app.models.channel_member import ChannelMember
 from app.models.message import Message
 from app.models.user import User
 from app.schemas.message import MessageCreate
@@ -83,6 +84,43 @@ async def websocket_endpoint(
 
                     await manager.broadcast(body.channel_id, _message_new_payload(message))
 
+                elif msg_type == "typing.start":
+                    channel_id = data["channel_id"]
+                    await require_membership(channel_id, user.id, db)
+                    await manager.broadcast(
+                        channel_id,
+                        {"type": "typing.update", "channel_id": channel_id, "user_id": user.id, "is_typing": True},
+                        exclude=websocket,
+                    )
+
+                elif msg_type == "typing.stop":
+                    channel_id = data["channel_id"]
+                    await require_membership(channel_id, user.id, db)
+                    await manager.broadcast(
+                        channel_id,
+                        {"type": "typing.update", "channel_id": channel_id, "user_id": user.id, "is_typing": False},
+                        exclude=websocket,
+                    )
+
+                elif msg_type == "receipt.read":
+                    channel_id = data["channel_id"]
+                    message_id = data["message_id"]
+                    await require_membership(channel_id, user.id, db)
+
+                    member = await db.scalar(
+                        select(ChannelMember).where(
+                            ChannelMember.channel_id == channel_id, ChannelMember.user_id == user.id
+                        )
+                    )
+                    member.last_read_message_id = message_id
+                    await db.commit()
+
+                    await manager.broadcast(
+                        channel_id,
+                        {"type": "receipt.update", "channel_id": channel_id, "user_id": user.id, "message_id": message_id},
+                        exclude=websocket,
+                    )
+
                 else:
                     await websocket.send_json({"type": "error", "detail": f"Unknown message type: {msg_type}"})
 
@@ -93,4 +131,3 @@ async def websocket_endpoint(
         manager.disconnect(websocket)
         if manager.user_connection_count(user.id) == 0:
             await mark_offline(user.id)
-

@@ -16,3 +16,5 @@ class ChannelMember(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     role: Mapped[str] = mapped_column(String(50))
     joined_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    last_read_message_id: Mapped[int | None] = mapped_column(ForeignKey("messages.id"), default=None)
+    
