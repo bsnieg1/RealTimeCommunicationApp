@@ -27,4 +27,15 @@ class ConnectionManager:
             await websocket.send_json(message)
 
 
+    def user_connection_count(self, user_id: int) -> int:
+        return sum(
+            1 for uid in self._connection_user.values() if uid == user_id
+        )
+
+
+    async def broadcast_all(self, message: dict) -> None:
+        for websocket in list(self._connection_user.keys()):
+            await websocket.send_json(message)
+
+
 manager = ConnectionManager()

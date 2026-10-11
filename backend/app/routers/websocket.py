@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.message import MessageCreate
 from app.services.connection_manager import manager
 from app.services.membership import require_membership
+from app.services.presence import mark_online, mark_offline
 
 router = APIRouter(tags=["websocket"])
 
@@ -43,6 +44,7 @@ async def websocket_endpoint(
 
     await websocket.accept()
     manager.connect(websocket, user.id)
+    await mark_online(user.id)
 
     try:
         while True:
@@ -89,3 +91,6 @@ async def websocket_endpoint(
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+        if manager.user_connection_count(user.id) == 0:
+            await mark_offline(user.id)
+

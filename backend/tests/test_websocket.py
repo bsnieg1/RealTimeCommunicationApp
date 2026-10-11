@@ -36,11 +36,11 @@ async def test_retry_does_not_rebroadcast(token1, token2, channel_id):
         }
         await ws1.send(json.dumps(payload))
         first = json.loads(await ws1.recv())
-        await ws2.recv()  # the real broadcast
+        await ws2.recv()
 
-        await ws1.send(json.dumps(payload))  # retry, same client_message_id
+        await ws1.send(json.dumps(payload)) 
         retry = json.loads(await ws1.recv())
-        assert retry["id"] == first["id"]  # same message, not a new one
+        assert retry["id"] == first["id"] 
 
         with pytest.raises(TimeoutError):
-            await asyncio.wait_for(ws2.recv(), timeout=1.0)  # ws2 got nothing extra
+            await asyncio.wait_for(ws2.recv(), timeout=1.0) 
